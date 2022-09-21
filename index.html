@@ -1,0 +1,139 @@
+<!doctype html>
+<html ng-app="schengenCalcApp">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Schengen Calculator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-iYQeCzEYFbKjA/T2uDLTpkwGzCiq6soy8tYaI1GyVh/UjpbCx/TYkiZhlZB6+fzT" crossorigin="anonymous">
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+    <script src="code.js"></script>
+</head>
+
+<body>
+    <div ng-controller="schengenCalcController as calc" class="container">
+        <br>
+        <div class="card">
+            <h4 class="card-header">Schengen Calculator Tourist Visa Calculator</h4>
+            <div class="card-body">
+                <p class="lead">The Schengen Calculator can help determine how long to stay in Europe's Schengen area.</p>
+                For US residents, staying in the Europe Schengen area (26 countries) can get complex when trying to maximize the days within the area.
+                According to <a href="https://www.schengenvisainfo.com/us-citizens/">Schengen Visa Info</a>:
+                <p><em>Many people get confused when it comes to the 90/180 rule. But, the rule is very simple. The 180-day period keeps rolling. Therefore, anytime you wish to enter the Schengen, you just have to count backward the last 180 days, and see if you have been present there for more than 90 days throughout that period.</em></p>
+                While the rule is simple, if coming within the area many times it can get a bit complex to count the days.
+                This tool helps with complex entries and exits, making sure you don't overstay your alloted time.
+                Of course, while this tool is here to help and you should check with another source as to not run into trouble with immigration officers.
+            </div>
+        </div>
+        <br>
+
+        <!--Adding trips-->
+        <form ng-submit="calc.addTrip(calc.newTripName, calc.newArrival, calc.newDeparture)" class="card">
+            <div class="card-header">Add new trip</div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col">
+                        <label for="formTripName" class="form-label">New Trip Name (optional)</label>
+                        <input type="text" ng-model="calc.newTripName" class="form-control" placeholder="Trip name"
+                               id="formTripName">
+                    </div>
+                    <div class="col">
+                        <label for="formNewArrival" class="form-label">Arrival Date</label>
+                        <input type="date" ng-model="calc.newArrival" class="form-control" id="formNewArrival">
+                    </div>
+                    <div class="col">
+                        <label for="formNewDeparture" class="form-label">Departure Date</label>
+                        <input type="date" ng-model="calc.newDeparture" class="form-control" id="formNewDeparture">
+                    </div>
+                    <div class="col">
+                        <br>
+                        <input class="btn btn-primary" type="submit" ng-disabled="!calc.canAddTrip(calc.newArrival, calc.newDeparture, calc.tripList)" value="Add new trip">
+                    </div>
+                </div>
+                <div class="row" ng-show="calc.errorAddTripMessage.length > 0">
+                    <span class="small text-danger">{{calc.errorAddTripMessage}}</span>
+                </div>
+            </div>
+        </form>
+        <br>
+
+        <!--List of trips-->
+        <div class="card">
+            <div class="card-header">
+                Trips into the Schengen area
+            </div>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item" ng-repeat="trip in calc.tripList">
+                    <div class="row">
+                        <div class="col">{{trip.tripName}}</div>
+                        <div class="col">{{trip.arrival | date}}</div>
+                        <div class="col">{{trip.departure | date}}</div>
+                        <div class="col">Number of Days: {{trip.days}}</div>
+                        <div class="col">
+                            <button type="button" class="btn btn-danger btn-sm"
+                                    ng-click="calc.removeTrip(trip.arrival)">
+                                Remove
+                            </button>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+            <div class="card-footer text-muted">
+                Trips: {{calc.tripList.length}}, <a href="" ng-click="calc.removeAll()">Remove all (start over)</a>
+            </div>
+        </div>
+        <br />
+
+        <!--List of the dates showing balance-->
+        <div class="card">
+            <div class="card-header">
+                Available days in Schengen by date
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Date</th>
+                            <th scope="col">Trip</th>
+                            <th scope="col">Balance</th>
+                            <th scope="col">+180 days</th>
+                            <th scope="col">-180 days</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="row in calc.dateList" ng-class="{'table-primary': row.isInSchengen}">
+                            <td>{{row.date | date}}</td>
+                            <td>{{row.tripName}}</td>
+                            <td class="text-center" ng-class="{'table-danger': row.balance > 90, 'table-warning': row.balance >= 80, 'table-success': row.balance >= 0}">{{row.balance}}</td>
+                            <td>{{row.date180Future | date}}</td>
+                            <td>{{row.date180Past | date}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <br>
+        <!-- Code Variables - used for debugging - this wouldn't go into a production version -->
+        <div class="card">
+            <div class="card-header">Code Variables</div>
+            <div class="card-body">
+                <pre>
+        newTripName: {{calc.newTripName}}
+        newArrivalDate: {{calc.newArrival}}
+        newDepartureDate: {{calc.newDeparture}}
+        tripList: {{calc.tripList | json}}
+        </pre>
+            </div>
+        </div>
+
+    </div>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-u1OknCvxWvY5kfmNBILK2hRnQC3Pr17a+RTT6rIHI7NnikvbZlHgTPOOmMi466C8"
+            crossorigin="anonymous"></script>
+</body>
+
+</html>
